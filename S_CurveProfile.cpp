@@ -159,20 +159,21 @@ class S_CurveProfile {
             this->isReversed = this->distance < 0;
             this->distance = abs(this->distance);
 
-            float time = this->constraints.maxAcceleration / this->constraints.maxJerk;
+            float time = this->constraints.maxAcceleration / this->constraints.maxJerk; // Calculates the time to reach maximum acceleration with the max rate of change of acceleration (jerk).
 
-            if (this->constraints.maxJerk * pow(time,2) >= this->constraints.maxVelocity) {
+            if (this->constraints.maxJerk * pow(time,2) >= this->constraints.maxVelocity) { //  If max velocity can't be reached within the max jerk and acceleration.
                 this->fullAcceleration = false;
                 float t1 = sqrt(this->constraints.maxVelocity / this->constraints.maxJerk);
-                this->minDistance = this->constraints.maxJerk * pow(t1,3) * 2;
+                this->minDistance = this->constraints.maxJerk * pow(t1,3) * 2; // Calculates the min distance for full acceleration
                 this->fullDistance = this->minDistance;
             }
             else {
                 this->fullAcceleration = true;
                 float t1 = this->constraints.maxAcceleration / this->constraints.maxJerk;
-                this->minDistance = constraints.maxJerk * pow(t1,3) * 2;
+                this->minDistance = this->constraints.maxJerk * pow(t1,3) * 2; // Calculates the min distance for full acceleration
 
-                float t2 = (this->constraints.maxVelocity - (this->constraints.maxJerk * t1 * t1)) / this->constraints.maxAcceleration;
+                 // Calculates the full distance for full acceleration
+                float t2 = (this->constraints.maxVelocity - (this->constraints.maxJerk * pow(t1,2))) / this->constraints.maxAcceleration;
                 this->fullDistance = (0.5 * this->constraints.maxJerk * pow(t1,2)) * t2 + 0.5 * (this->constraints.maxAcceleration) * pow(t2,2);
                 this->fullDistance += this->constraints.maxVelocity * t1;
                 this->fullDistance *= 2;
@@ -189,7 +190,7 @@ class S_CurveProfile {
                 setAccelerationPhase(4);
 
             }
-            else if (!this->fullAcceleration) { // When reaching maximum acceleration isn't necessary or feasible
+            else if (!this->fullAcceleration) { // When reaching max acceleration isn't necessary or feasible
                 setTimePhase(5);
                 setDistancePhase(5);
                 setVelocityPhase(5);
@@ -233,13 +234,13 @@ class S_CurveProfile {
             else if (time >= this->timePhase[6]) {
                 pt = this->distance;
             }
-            else if (time < timePhase[0]) {
-                pt = constraints.maxJerk * pow(time, 3) / 6;
+            else if (time < timePhase[0]) { // Is in the jerk phase of the S-curve.
+                pt = constraints.maxJerk * pow(time, 3) / 6; // The robot’s position during this phase is the integral of the jerk
             }
             else {
                 int index = 1;
 
-                for (int i = 1; i < 7; i++) {
+                for (int i = 1; i < 7; i++) { // Determines the current phase iterating through the time phases.
                     if (time < this->timePhase[i]) {
                         index = i;
                         break;
@@ -252,7 +253,7 @@ class S_CurveProfile {
                 float a0 = this->accPhase[index];
                 float j = this->jerkPhase[index];
 
-                pt = p0 + (v0 * t) + (0.5 * a0 * pow(t, 2)) + (j * pow(t, 3) / 6);
+                pt = p0 + (v0 * t) + (0.5 * a0 * pow(t, 2)) + (j * pow(t, 3) / 6); // P(t) = P0 + V0*t + 1/2*A0*t^2 + 1/6*J*t^3
             }
 
             return this->isReversed ? -pt : pt; 
@@ -265,7 +266,7 @@ class S_CurveProfile {
                 vel = 0;
             }
             else if (time < this->timePhase[0]) {
-                vel = 0.5 * this->constraints.maxJerk * time * time;
+                vel = 0.5 * this->constraints.maxJerk * pow(time,2); // Calculates velocity under constant acceleration V(t) = 1/2*A0*t^
             }
             else {
                 int index = 1;
