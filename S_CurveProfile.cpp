@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdexcept>
+#include <vector>
 
 struct Constraints {
     float maxVelocity;
@@ -309,47 +310,56 @@ class S_CurveProfile {
             return this->isReversed ? -acc : acc;  
         }
 
-        float getFullTime() {
-            return this->timePhase[6];
-        }
+        std::vector<float> getVelocityVector(float distance, float steps) {
+            std::vector<float> velocities;
 
-        void setDistance(float distance) {
             this->distance = distance;
+
+            this->updateConstraints();
+            this->setPhases();
+
+            for(float i = 0; i <= this->timePhase[6]; i+=steps) {
+                velocities.push_back(getVelocity(i));
+            }
+
+            return velocities;
         }
 
-        void printPosition(float steps) {
-            for(float i = 0; i < this->timePhase[6]; i+=steps) {
-                std::cout << getPosition(i) << std::endl;
-            }
-        };
+        std::vector<float> getAccelerationVector(float distance, float steps) {
+            std::vector<float> accelerations;
 
-        void printVelocity(float steps) {
-            for(float i = 0; i < this->timePhase[6]; i+=steps) {
-                std::cout << getVelocity(i) << std::endl;
-            }
-        };
+            this->distance = distance;
 
-        void printAcceleration(float steps) {
-            for(float i = 0; i < this->timePhase[6]; i+=steps) {
-                std::cout << getAcceleration(i) << std::endl;
+            this->updateConstraints();
+            this->setPhases();
+
+            for(float i = 0; i <= this->timePhase[6]; i+=steps) {
+                accelerations.push_back(getAcceleration(i));
             }
-        };
+
+            return accelerations;
+        }
+
+        std::vector<float> getPositionVector(float distance, float steps) {
+            std::vector<float> positions;
+
+            this->distance = distance;
+
+            this->updateConstraints();
+            this->setPhases();
+
+            for(float i = 0; i <= this->timePhase[6]; i+=steps) {
+                positions.push_back(getPosition(i));
+            }
+
+            return positions;
+        }
 };
 
 int main() {
     S_CurveProfile profile;
 
-    profile.setDistance(20);
     profile.setConstraints(10,10,15,20);
-    profile.updateConstraints();
-    profile.setPhases();
 
-    profile.printPosition(0.1);
-    std::cout << "\n=========================================\n" << std::endl;
-
-    profile.printVelocity(0.1);
-    std::cout << "\n=========================================\n" << std::endl;
-
-    profile.printAcceleration(0.1);
-    std::cout << "\n=========================================\n" << std::endl;
+    std::vector<float> velocities = profile.getVelocityVector(20,0.1);
 }
